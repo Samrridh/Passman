@@ -1,0 +1,6 @@
+.venv
+__pycache__
+del.py
+main.spec
+dist
+build
