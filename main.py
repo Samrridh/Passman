@@ -17,6 +17,9 @@ from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
 from rich import box
 
+from twofa import register_credential, remove_credential, get_current_code, verify_code
+
+
 console = Console()
 
 VAULT_PATH = os.path.expanduser("~/.tui_vault.bin")
@@ -145,6 +148,9 @@ def main():
                 password = getpass.getpass("Password: ")
             notes = Prompt.ask("Notes", default="")
             vault[name] = {"username": user, "password": password, "notes": notes}
+            
+            register_credential(name)
+
             save_vault(vault, master)
             console.print("[green]Saved[/green]")
         elif choice.startswith("v"):
@@ -165,6 +171,18 @@ def main():
             if key not in vault:
                 console.print("[red]No such entry[/red]")
                 continue
+
+            code = get_current_code(key)
+            if code is None:
+                register_credential(key)
+                code = get_current_code(key)
+            # console.print(f"[dim]2FA code for {key}: [bold magenta]{code}[/bold magenta][/dim]")
+            console.print(f"2FA code for {key}: [bold magenta]Check in twofa.py terminal[/bold magenta]")
+            user_code = Prompt.ask("Enter 2FA code")
+            if not verify_code(key, user_code):
+                console.print("[red]Invalid 2FA code. Access denied.[/red]")
+                continue
+
             entry = vault[key]
             console.print(Panel(f"[bold]{key}[/bold]\nUser: {entry['username']}\nPass: {entry['password']}\nNotes: {entry['notes']}", title="Entry"))
             if CLIP_AVAILABLE and Confirm.ask("Copy password to clipboard?", default=False):
@@ -188,6 +206,7 @@ def main():
             if Confirm.ask(f"Delete {key}?", default=False):
                 del vault[key]
                 save_vault(vault, master)
+                remove_credential(key)
                 console.print("[green]Deleted[/green]")
         elif choice.startswith("g"):
             length = Prompt.ask("Length", default="16")

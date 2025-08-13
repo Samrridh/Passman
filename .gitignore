@@ -4,3 +4,5 @@ del.py
 main.spec
 dist
 build
+.gitignore
+try.py
