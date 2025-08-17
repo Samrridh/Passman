@@ -65,10 +65,15 @@ def generate_totp_qr(name: str, secret: str):
     uri = totp.provisioning_uri(name=name, issuer_name="TUI Password Manager")
     img = qrcode.make(uri)
     file_path = f"./QR/{name}_qr.png"
+    try:
+        os.mkdir("./QR")
+    except FileExistsError:
+        pass
     img.save(file_path)
     img_obj = Image.open(file_path)
     img_obj.show()
     console.print(f"[green]QR code saved as [bold]{file_path}[/bold]. Scan it with Google Authenticator.[/green]")
+    console.print(f"[blue] Opening image...[/blue]")
 
 def generate_password(length: int = 16) -> str:
     alphabet = string.ascii_letters + string.digits + string.punctuation
